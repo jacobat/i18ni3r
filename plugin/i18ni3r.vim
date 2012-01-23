@@ -1,47 +1,36 @@
 let b:i18_buffer_name = ''
-let b:orig_buffer_name = ''
 
 function! Initialise_i18ni3r()
   let curbufname = expand('%')
   let path = expand('%:p')
-  let translated_path = substitute(path, 'app/views/\(.*\)\.html.*', 'config/locales/\1/', '')
+  let translated_path = substitute(path, 'app/views/\(.*\)/_\?\(.*\)\.html.*', 'config/locales/\1/\2/', '')
   let altbufname = translated_path . "da.yml"
 
-  if ! isdirectory(translated_path)
-    if exists("*mkdir")
-      echo "Create dir " . translated_path
-      call mkdir(translated_path, "p")
-    else
-      echo "mkdir missing"
-    endif
-  endif
-
-  echo altbufname
   if filereadable(altbufname)
     exe 'edit ' . altbufname
+    let b:buffer_indent = 'none'
     $
   else
     enew
+    " Prepare translation file
+    exe "normal ida:"
+    let t_indent='  '
+    let t_path=substitute(translated_path, '.*config\/locales\/', '', '')
+    for transkey in split(t_path, '/')
+      exe "normal o" . t_indent . transkey . ':'
+      let t_indent=t_indent . '  '
+    endfor
+    let b:buffer_indent = t_indent
     exe 'write ' . altbufname
   endif
-  " set up local buffer switch
-  nnoremap <buffer> <leader>m :call PrepareSubstitution()<cr>
-  let b:orig_buffer_name = curbufname
   let b:i18_buffer_name = curbufname
   exe 'buffer ' . curbufname
   let b:i18_buffer_name = altbufname
 endfunction
 
-function! PrepareSubstitution()
-  " switch to the source buffer
-  exe 'buffer ' . b:i18_buffer_name
-  normal `>a')
-  normal `<it('
-  normal vi'
-endfunction
-
-function! ExtractString(type, subst, ...)
-  let subst = a:subst
+function! ExtractString(type, ...)
+  call Initialise_i18ni3r()
+  let subst = input('I18n key: ')
   let sel_save = &selection
   let &selection = "inclusive"
   let reg_save = @@
@@ -58,12 +47,22 @@ function! ExtractString(type, subst, ...)
 
   exe 'b ' . b:i18_buffer_name
   normal Go
-  exe 'normal i' . subst . ':'
-  pu
-  normal k$J==
-  exe 'b ' . b:orig_buffer_name
+  exe 'normal i' . subst . ': '
+  normal p
+  if b:buffer_indent == 'none'
+    normal ==
+  else
+    exe 'normal 0i' . b:buffer_indent
+  endif
+  silent w
+  exe 'b ' . b:i18_buffer_name
 
-  exe "normal gvc<%= t('. " . subst . "') %>\<esc>"
+  exe "normal gvc<%= t('." . subst . "') %>\<esc>"
+
+  " Open the other buffer if it is not open
+  if bufwinnr(b:i18_buffer_name) < 0
+    exe "rightb vs " . b:i18_buffer_name
+  endif
 
   let &selection = sel_save
   let @@ = reg_save
@@ -71,5 +70,3 @@ function! ExtractString(type, subst, ...)
 endfunction
 
 vmap <silent> <leader>m :<C-U>call ExtractString(visualmode(), 1)<CR>
-nmap <silent> <leader>m :set opfunc=ExtractString<CR>g@
-
