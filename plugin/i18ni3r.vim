@@ -1,8 +1,22 @@
 let b:i18_buffer_name = ''
+let b:orig_buffer_name = ''
 
 function! Initialise_i18ni3r()
   let curbufname = expand('%')
-  let altbufname = expand('%:t:r') . '_i18n.txt'
+  let path = expand('%:p')
+  let translated_path = substitute(path, 'app/views/\(.*\)\.html.*', 'config/locales/\1/', '')
+  let altbufname = translated_path . "da.yml"
+
+  if ! isdirectory(translated_path)
+    if exists("*mkdir")
+      echo "Create dir " . translated_path
+      call mkdir(translated_path, "p")
+    else
+      echo "mkdir missing"
+    endif
+  endif
+
+  echo altbufname
   if filereadable(altbufname)
     exe 'edit ' . altbufname
     $
@@ -12,6 +26,7 @@ function! Initialise_i18ni3r()
   endif
   " set up local buffer switch
   nnoremap <buffer> <leader>m :call PrepareSubstitution()<cr>
+  let b:orig_buffer_name = curbufname
   let b:i18_buffer_name = curbufname
   exe 'buffer ' . curbufname
   let b:i18_buffer_name = altbufname
@@ -25,7 +40,8 @@ function! PrepareSubstitution()
   normal vi'
 endfunction
 
-function! ExtractString(type, ...)
+function! ExtractString(type, subst, ...)
+  let subst = a:subst
   let sel_save = &selection
   let &selection = "inclusive"
   let reg_save = @@
@@ -41,9 +57,13 @@ function! ExtractString(type, ...)
   endif
 
   exe 'b ' . b:i18_buffer_name
+  normal Go
+  exe 'normal i' . subst . ':'
   pu
-  pu
-  normal! `[v`]
+  normal k$J==
+  exe 'b ' . b:orig_buffer_name
+
+  exe "normal gvc<%= t('. " . subst . "') %>\<esc>"
 
   let &selection = sel_save
   let @@ = reg_save
