@@ -10,9 +10,19 @@ function! Initialise_i18ni3r()
     enew
     exe 'write ' . altbufname
   endif
+  " set up local buffer switch
+  nnoremap <buffer> <leader>m :call PrepareSubstitution()<cr>
   let b:i18_buffer_name = curbufname
   exe 'buffer ' . curbufname
   let b:i18_buffer_name = altbufname
+endfunction
+
+function! PrepareSubstitution()
+  " switch to the source buffer
+  exe 'buffer ' . b:i18_buffer_name
+  normal `>a')
+  normal `<it('
+  normal vi'
 endfunction
 
 function! ExtractString(type, ...)
