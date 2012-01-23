@@ -1,0 +1,46 @@
+*i18ni3r.txt*  -  Internationalisationiser
+
+Author:   Barry Arthur <barry dot arthur at gmail dot com>
+
+License: Same terms as Vim itself (see |license|)
+
+                                                *i18ni3r*
+INTRODUCTION ~
+
+i18ni3r attempts to make working with two related buffers of translation
+strings - the source and the destination.
+
+                                      *i18ni3r-operation*
+OPERATION ~
+
+For now, make an explicit call to initialise this buffer with:
+>
+  :call Initialise_i18ni3r()
+<
+
+Which will create a new file based on the current file with the extention of
+_i18n.txt. If this file already exists, it opens it instead. This all happens
+behind the scenes; you're left looking at your original file.
+
+The intended workflow is to visually select a string and type <leader>m. This
+will paste that string into the corresponding translation buffer twice,
+selecting the second version, waiting for you to press   c   to begin changing
+it. Type ctrl-6 to return to your original (source) buffer.
+
+                                  *i18ni3r-configuration*
+CONFIGURATION ~
+
+NA
+
+                                  *i18ni3r-activation*
+Automatic Activation ~
+
+NA
+
+                                  *i18ni3r-keymaps*
+Key Maps ~
+
+By default, i18ni3r uses the key map <leader>m to process snippets. This is not
+customisable yet.
+
+ vim:tw=78:ts=8:ft=help:norl:
